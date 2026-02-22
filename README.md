@@ -1,17 +1,62 @@
+# Walmart Sales Forecast
 
-## Context 
+Production-ready baseline forecasting project for Walmart weekly sales.
 
-Walmart Inc. is an American multinational retail corporation that operates a chain of hypermarkets, discount department stores, and grocery stores. Walmart's marketing service would like to have a machine learning model able to estimate the weekly sales in their stores. Such a model would help them understand better how the sales are influenced by economic indicators, and might be used to plan future marketing campaigns.
+## Portfolio highlights
 
-The dataset provided for this projet contains information about weekly sales achieved by different Walmart stores, and other variables such as the unemployment rate or the fuel price that might be useful for predicting the amount of sales.
+- Split from monorepo into a dedicated forecasting repository
+- Refactored into hexagonal architecture for domain/app/adapter separation
+- Added CLI workflow for training and prediction generation
+- Added unit tests for forecasting rules and application use cases
+- Added local smoke tests and Dockerized execution
+- Added dependency vulnerability scan workflow (`pip-audit`)
 
-The dataset (.csv file) is included in project folder. 
+## Project layout
 
-## Goals of the project
- - Explore the dataset and create come data visualisations
- - Train a baseline linear regression model
- - Train a regularized regression model
+- `src/walmart_sales_forecast/domain/`: sales forecasting rules
+- `src/walmart_sales_forecast/application/`: use cases and ports
+- `src/walmart_sales_forecast/adapters/`: CSV IO, model registry, prediction output
+- `src/walmart_sales_forecast/bootstrap/`: CLI wiring
+- `tests/unit/`: unit tests for domain and application layers
+- `scripts/smoke_test.sh`: end-to-end train/predict smoke test
+- `data/raw/`: source CSV
 
-## References
+## Quick start
 
-- [Walmart Dataset on Kaggle](https://www.kaggle.com/datasets/yasserh/walmart-dataset) (dataset used in this project is based on the Kaggle dataset with modifications by Jedha).
+```bash
+export PYTHONPATH=src
+python3 -m unittest discover -s tests/unit -p 'test_*.py'
+./scripts/smoke_test.sh
+```
+
+## CLI usage
+
+```bash
+python3 -m walmart_sales_forecast.bootstrap.cli train \
+  --train-csv data/raw/Walmart_Store_sales.csv \
+  --model-output artifacts/model.pkl
+
+python3 -m walmart_sales_forecast.bootstrap.cli predict \
+  --inference-csv data/raw/Walmart_Store_sales.csv \
+  --model-path artifacts/model.pkl \
+  --output-csv artifacts/predictions.csv
+```
+
+## Docker
+
+```bash
+docker build -t walmart-sales-forecast:local .
+docker run --rm -v "$PWD/artifacts:/app/artifacts" walmart-sales-forecast:local \
+  train --train-csv /app/data/raw/Walmart_Store_sales.csv --model-output /app/artifacts/model.pkl
+
+docker run --rm -v "$PWD/artifacts:/app/artifacts" walmart-sales-forecast:local \
+  predict --inference-csv /app/data/raw/Walmart_Store_sales.csv --model-path /app/artifacts/model.pkl --output-csv /app/artifacts/predictions.csv
+```
+
+## Verification commands
+
+```bash
+python3 -m unittest discover -s tests/unit -p 'test_*.py'
+./scripts/smoke_test.sh
+docker build -t walmart-sales-forecast:local .
+```
